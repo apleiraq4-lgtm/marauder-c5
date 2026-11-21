@@ -15,6 +15,10 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        driver: [ILI9488, ST7796]
     steps:
       - name: Checkout ESP32 Marauder source
         uses: actions/checkout@v4
@@ -225,6 +229,10 @@ jobs:
           cp User*.h CustomTFT_eSPI/
           sed -i 's|^//#include <User_Setup_pcb3501s_c5.h>|#include <User_Setup_pcb3501s_c5.h>|' CustomTFT_eSPI/User_Setup_Select.h
           grep -Fqx '#include <User_Setup_pcb3501s_c5.h>' CustomTFT_eSPI/User_Setup_Select.h
+          if [ "${{ matrix.driver }}" = "ST7796" ]; then
+            sed -i 's|^#define ILI9488_DRIVER|//#define ILI9488_DRIVER|; s|^//#define ST7796_DRIVER.*|#define ST7796_DRIVER|' CustomTFT_eSPI/User_Setup_pcb3501s_c5.h
+          fi
+          grep -n "_DRIVER" CustomTFT_eSPI/User_Setup_pcb3501s_c5.h
 
       - name: Modify platform.txt
         run: |
@@ -251,13 +259,13 @@ jobs:
           ls -la "$BUILD_DIR"
           cp "$BUILD_DIR"/*.bin out/
           cd out
-          [ -f esp32_marauder.ino.merged.bin ] && mv esp32_marauder.ino.merged.bin marauder_pcb3501s_FULL_0x0.bin
-          [ -f esp32_marauder.ino.bin ] && mv esp32_marauder.ino.bin marauder_pcb3501s_APP_0x10000.bin
+          [ -f esp32_marauder.ino.merged.bin ] && mv esp32_marauder.ino.merged.bin marauder_${{ matrix.driver }}_FULL_0x0.bin
+          [ -f esp32_marauder.ino.bin ] && mv esp32_marauder.ino.bin marauder_${{ matrix.driver }}_APP_0x10000.bin
           ls -la
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: marauder_c5_pcb3501s
+          name: marauder_${{ matrix.driver }}
           path: out/*.bin
           retention-days: 30
