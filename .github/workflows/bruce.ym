@@ -1,0 +1,171 @@
+name: Build Bruce - C5 PCB3501S
+
+# Builds Bruce firmware for: XH-C5E (ESP32-C5-N16R8) + 3.5" PCB3501S (ILI9488 + XPT2046)
+# Wiring = Faisal's existing hookup. Flash the resulting Bruce-*.bin at 0x0.
+# Run from the Actions tab -> "Build Bruce - C5 PCB3501S" -> Run workflow (or just push).
+
+on:
+  workflow_dispatch:
+  push:
+
+env:
+  BRUCE_SHA: 2b6ba4d490bfcf94ce2574c6154537dbd5838c3d   # Bruce 1.17
+  SELECTED_ENV: esp32-c5-pcb3501s
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Bruce (with submodules)
+        uses: actions/checkout@v4
+        with:
+          repository: pr3y/Bruce
+          ref: ${{ env.BRUCE_SHA }}
+          submodules: recursive
+
+      - name: Add PCB3501S board files
+        run: |
+          mkdir -p boards/ESP32-C5-pcb3501s
+          base64 -d > boards/ESP32-C5-pcb3501s/ESP32-C5-pcb3501s.ini <<'INIEOF'
+          OyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+          PQo7ICBCcnVjZSBib2FyZDogRVNQMzItQzUgKFhILUM1RSwgTjE2UjgpICsgMy41IiBQQ0IzNTAxUyAoSUxJOTQ4OCArIFhQVDIw
+          NDYpCjsgIFdpcmluZyBtYXRjaGVzIEZhaXNhbCdzIGV4aXN0aW5nIGhvb2t1cCAoc2FtZSBhcyB0aGUgTWFyYXVkZXIgYnVpbGQp
+          Ogo7ICAgIENTPTEwICBSU1Q9MSAgREM9OSAgTU9TST01ICBTQ0xLPTYgIE1JU08vVF9ETz00ICBCTD04ICBUT1VDSF9DUz0zCjsg
+          ICAgKGRvIE5PVCBjb25uZWN0IHRoZSBwYW5lbCBTRE87IFRfRE8gaXMgdGhlIG9ubHkgZGV2aWNlIG9uIE1JU08pCjsgPT09PT09
+          PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KCltlbnY6
+          ZXNwMzItYzUtcGNiMzUwMXNdCmJvYXJkID0gZXNwMzJjNQpib2FyZF9idWlsZC5wYXJ0aXRpb25zID0gY3VzdG9tXzE2TWIuY3N2
+          CmJ1aWxkX3NyY19maWx0ZXIgPSAke2Vudi5idWlsZF9zcmNfZmlsdGVyfSArPC4uL2JvYXJkcy9FU1AzMi1DNS1wY2IzNTAxcz4K
+          YnVpbGRfZmxhZ3MgPQoJJHtlbnYuYnVpbGRfZmxhZ3N9CgktSWJvYXJkcy9FU1AzMi1DNS1wY2IzNTAxcwoKCTsgPT09PT09PT09
+          PT09PT09PT09PT0gRnJhbWV3b3JrIENvbnRyb2wgRmxhZ3MgPT09PT09PT09PT09PT09PT09PT0KCS1EQk9BUkRfSEFTX1BTUkFN
+          PTEKCS1EQVJEVUlOT19VU0JfQ0RDX09OX0JPT1Q9MQoJLURBUkRVSU5PX1VTQl9NT0RFPTEKCS1EQ09SRV9ERUJVR19MRVZFTD0x
+          CgoJOyA9PT09PT09PT09PT09PT09PT09PSBGZWF0dXJlIGdhdGVzID09PT09PT09PT09PT09PT09PT09CgktREFMTE9XX0FMTF9H
+          UElPX0ZPUl9JUl9SRj0xCgktREhBU19SR0JfTEVEPTEKCgk7ID09PT09PT09PT09PT09PT09PT09IERpc3BsYXkgKElMSTk0ODgg
+          MzIweDQ4MCBvdmVyIFNQSSkgPT09PT09PT09PT09PT09PT09PT0KCS1EIFVTRV9URlRfRVNQST0xCgktRFVTRVJfU0VUVVBfTE9B
+          REVEPTEKCS1ESUxJOTQ4OF9EUklWRVI9MQoJLURURlRfV0lEVEg9MzIwCgktRFRGVF9IRUlHSFQ9NDgwCgktRFRGVF9CQUNLTElH
+          SFRfT049MQoJLURURlRfQkw9OAoJLURURlRfUlNUPTEKCS1EVEZUX0RDPTkKCS1EVEZUX0NTPTEwCgktRFRGVF9NT1NJPTUKCS1E
+          VEZUX1NDTEs9NgoJLURURlRfTUlTTz00CgktRFNNT09USF9GT05UPTEKCTsgTG9uZyBqdW1wZXIgd2lyZXM6IGtlZXAgU1BJIGNv
+          bnNlcnZhdGl2ZSBzbyBwaXhlbHMgZG9uJ3QgY29ycnVwdAoJLURTUElfRlJFUVVFTkNZPTE2MDAwMDAwCgktRFNQSV9SRUFEX0ZS
+          RVFVRU5DWT0xMDAwMDAwMAoJLURTUElfVE9VQ0hfRlJFUVVFTkNZPTI1MDAwMDAKCgk7ID09PT09PT09PT09PT09PT09PT09IFJl
+          c2lzdGl2ZSB0b3VjaCAoWFBUMjA0Niwgc2hhcmVzIGRpc3BsYXkgU1BJKSA9PT09PT09PT0KCS1EVE9VQ0hfQ1M9MwoJLURIQVNf
+          VE9VQ0g9MQoJLURUT1VDSF9DVFJMX1hQVDIwNDY9MQoJLURIQVNfUkVTSVNUSVZFX1RPVUNIPTEKCS1EQ1lEMjhfRElTUExBWV9I
+          T1JfUkVTX01BWD00ODAKCS1EQ1lEMjhfRElTUExBWV9WRVJfUkVTX01BWD0zMjAKCS1EQ1lEMjhfVG91Y2hSX0lSUT0tMQoJLURD
+          WUQyOF9Ub3VjaFJfTUlTTz00CgktRENZRDI4X1RvdWNoUl9NT1NJPTUKCS1EQ1lEMjhfVG91Y2hSX0NMSz02CgktRENZRDI4X1Rv
+          dWNoUl9DUz0zCgktRENZRDI4X1RvdWNoUl9DQUxfWE1JTj0zNTMKCS1EQ1lEMjhfVG91Y2hSX0NBTF9YTUFYPTM1NjgKCS1EQ1lE
+          MjhfVG91Y2hSX0NBTF9ZTUlOPTI2OQoJLURDWUQyOF9Ub3VjaFJfQ0FMX1lNQVg9MzQ5MQoKCTsgPT09PT09PT09PT09PT09PT09
+          PT0gRW52aXJvbm1lbnQgRmxhZ3MgPT09PT09PT09PT09PT09PT09PT0KCS1EREVWSUNFX05BTUU9JyJDNSBQQ0IzNTAxUyInCgkt
+          REJUTl9BTElBUz0nIk9LIicKCS1ETEVEX09SREVSPUdSQgoJLURMRURfQ09VTlQ9MQoJLURMRURfVFlQRT1XUzI4MTIKCS1ETEVE
+          X0NPTE9SX1NURVA9MTUKCS1EUkdCX0xFRD0yNwoJLURST1RBVElPTj0xCgktRERFRVBTTEVFUF9XQUtFVVBfUElOPTAK
+          INIEOF
+          base64 -d > boards/ESP32-C5-pcb3501s/interface.cpp <<'CPPEOF'
+          Ly8gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+          PT0KLy8gIEJydWNlIGludGVyZmFjZSBmb3IgRVNQMzItQzUgKFhILUM1RSkgKyAzLjUiIFBDQjM1MDFTIChJTEk5NDg4ICsgWFBU
+          MjA0NikKLy8gIE9wdGlvbmFsIGFkZC1vbiBidXNlcyAoQ0MxMTAxL05SRjI0L1NEL1BONTMyL0lSL1JGL0kyQy9VQVJUKSBhcmUg
+          bWFwcGVkIHRvCi8vICBGUkVFIGhlYWRlciBwaW5zIG9ubHkgezIsNywyMywyNCwyNSwyNn0uIFRoZSA4IGRpc3BsYXkvdG91Y2gg
+          cGlucwovLyAgKDEwLDksMSw1LDYsNCw4LDMpIGFuZCB0aGUgUkdCIExFRCAoMjcpIGFyZSBuZXZlciByZXVzZWQgaGVyZSwgc28g
+          bm90aGluZwovLyAgZmlnaHRzIHRoZSBzY3JlZW4uIEZhaXNhbCBoYXMgbm8gYWRkLW9uIG1vZHVsZXM7IHRob3NlIHBpbnMgYXJl
+          IGhhcm1sZXNzLgovLyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+          PT09PT09PT09PT09PQojaW5jbHVkZSAiQ1lEMjhfVG91Y2hzY3JlZW5SLmgiCiNpbmNsdWRlICJjb3JlL3Bvd2VyU2F2ZS5oIgoj
+          aW5jbHVkZSAiY29yZS91dGlscy5oIgojaW5jbHVkZSAiaGFsL2JyaWdodC9icmlnaHQuaCIKI2luY2x1ZGUgImhhbC9kZXZpY2Uu
+          aCIKI2luY2x1ZGUgImhhbC9pbnB1dHMvYnV0dG9ucy5oIgojaW5jbHVkZSAiaGFsL2lucHV0cy90b3VjaC5oIgojaW5jbHVkZSA8
+          aW50ZXJmYWNlLmg+CgojaWZkZWYgSEFTX1RPVUNICmV4dGVybiBDWUQyOF9Ub3VjaFIgdG91Y2g7IC8vIGRlZmluZWQgYnkgaGFs
+          L2lucHV0cy90b3VjaC5jcHAKc3RhdGljIERldmljZVRvdWNoIHRvdWNoQ2ZnKCkgewogICAgRGV2aWNlVG91Y2ggY2ZnOwogICAg
+          Ly8gWFBUMjA0NiByZXBvcnRzIGxhbmRzY2FwZSAocm90YXRpb24gMSkgY29vcmRpbmF0ZXMKICAgIC8vIHJvdGF0aW9uOiAgICAg
+          ICAgICAgIDAgICAgICAxICAgICAgMiAgICAgIDMKICAgIGNvbnN0IGJvb2wgc3dhcFhZWzRdID0ge3RydWUsIGZhbHNlLCB0cnVl
+          LCBmYWxzZX07CiAgICBjb25zdCBib29sIG1pcnJvclhbNF0gPSB7dHJ1ZSwgZmFsc2UsIGZhbHNlLCB0cnVlfTsKICAgIGNvbnN0
+          IGJvb2wgbWlycm9yWVs0XSA9IHtmYWxzZSwgZmFsc2UsIHRydWUsIHRydWV9OwogICAgZm9yIChpbnQgaSA9IDA7IGkgPCA0OyBp
+          KyspIHsKICAgICAgICBjZmcuU3dhcFhZW2ldID0gc3dhcFhZW2ldOwogICAgICAgIGNmZy5NaXJyb3JYW2ldID0gbWlycm9yWFtp
+          XTsKICAgICAgICBjZmcuTWlycm9yWVtpXSA9IG1pcnJvcllbaV07CiAgICB9CiAgICByZXR1cm4gY2ZnOwp9CiNlbmRpZgoKLyoq
+          KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+          KioqKioqKioqKgoqKiBGdW5jdGlvbiBuYW1lOiBfc2V0dXBfZ3BpbygpCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+          KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8Kdm9pZCBfc2V0dXBfZ3Bpbygp
+          IHsKICAgIC8vIEFsbCBvZiB0aGUgZm9sbG93aW5nIHVzZSBGUkVFIHBpbnMgb25seSAobmV2ZXIgdGhlIDggVEZUL3RvdWNoIHBp
+          bnMpLgogICAgYnJ1Y2VDb25maWdQaW5zLmkyY19idXMgPSB7KGdwaW9fbnVtX3QpMjMsIChncGlvX251bV90KTI0fTsgLy8gc2Rh
+          LCBzY2wgKEdyb3ZlKQogICAgYnJ1Y2VDb25maWdQaW5zLnJmVHggPSAyNTsKICAgIGJydWNlQ29uZmlnUGlucy5yZlJ4ID0gMjY7
+          CiAgICBicnVjZUNvbmZpZ1BpbnMuaXJUeCA9IDI1OwogICAgYnJ1Y2VDb25maWdQaW5zLmlyUnggPSAyNjsKICAgIGJydWNlQ29u
+          ZmlnUGlucy5yb3RhdGlvbiA9IDE7CiAgICBicnVjZUNvbmZpZ1BpbnMudWFydF9idXMgPSB7KGdwaW9fbnVtX3QpMTEsIChncGlv
+          X251bV90KTEyfTsgLy8gcngsIHR4IChjb25zb2xlIFVBUlQwKQogICAgYnJ1Y2VDb25maWdQaW5zLmdwc19idXMgPSB7KGdwaW9f
+          bnVtX3QpMTEsIChncGlvX251bV90KTEyfTsgIC8vIHJ4LCB0eAogICAgYnJ1Y2VDb25maWdQaW5zLmJhZHVzYl9idXMgPSB7KGdw
+          aW9fbnVtX3QpMjMsIChncGlvX251bV90KTI0fTsKICAgIC8vIEdlbmVyaWMgLyBtb2R1bGUgU1BJIGJ1cyBvbiBmcmVlIHBpbnM6
+          IHNjaz0yNCBtaXNvPTIgbW9zaT03IGNzPTIzCiAgICBicnVjZUNvbmZpZ1BpbnMub3V0ZXJfYnVzID0geyhncGlvX251bV90KTI0
+          LCAoZ3Bpb19udW1fdCkyLCAoZ3Bpb19udW1fdCk3LCAoZ3Bpb19udW1fdCkyM307CiAgICBicnVjZUNvbmZpZ1BpbnMuUE41MzJf
+          YnVzID0geyhncGlvX251bV90KTI0LCAoZ3Bpb19udW1fdCkyLCAoZ3Bpb19udW1fdCk3LCAoZ3Bpb19udW1fdCkyM307CiAgICBi
+          cnVjZUNvbmZpZ1BpbnMuQ0MxMTAxX2J1cyA9IHsKICAgICAgICAoZ3Bpb19udW1fdCkyNCwgKGdwaW9fbnVtX3QpMiwgKGdwaW9f
+          bnVtX3QpNywgKGdwaW9fbnVtX3QpMjMsIChncGlvX251bV90KTI1LCBHUElPX05VTV9OQwogICAgfTsgLy8gc2NrLG1pc28sbW9z
+          aSxjcyxnZG8wLGdkbzIKICAgIGJydWNlQ29uZmlnUGlucy5OUkYyNF9idXMgPSB7CiAgICAgICAgKGdwaW9fbnVtX3QpMjQsIChn
+          cGlvX251bV90KTIsIChncGlvX251bV90KTcsIChncGlvX251bV90KTIzLCAoZ3Bpb19udW1fdCkyNgogICAgfTsgLy8gc2NrLG1p
+          c28sbW9zaSxjcyhzcyksY2UKICAgIGJydWNlQ29uZmlnUGlucy5TRENBUkRfYnVzID0gewogICAgICAgIChncGlvX251bV90KTI0
+          LCAoZ3Bpb19udW1fdCkyLCAoZ3Bpb19udW1fdCk3LCAoZ3Bpb19udW1fdCkyNgogICAgfTsgLy8gc2NrLG1pc28sbW9zaSxjcwoj
+          aWYgIWRlZmluZWQoTElURV9WRVJTSU9OKQogICAgYnJ1Y2VDb25maWdQaW5zLlc1NTAwX2J1cyA9IHsKICAgICAgICAoZ3Bpb19u
+          dW1fdCkyNCwgKGdwaW9fbnVtX3QpMiwgKGdwaW9fbnVtX3QpNywgKGdwaW9fbnVtX3QpMjMsIChncGlvX251bV90KTI1LCBHUElP
+          X05VTV9OQwogICAgfTsgLy8gc2NrLG1pc28sbW9zaSxjcyxpbnQscnN0CiNlbmRpZgoKICAgIHBpbk1vZGUoVEZUX0NTLCBPVVRQ
+          VVQpOwogICAgZGlnaXRhbFdyaXRlKFRGVF9DUywgSElHSCk7CiAgICBwaW5Nb2RlKFRGVF9NT1NJLCBPVVRQVVQpOwogICAgZGln
+          aXRhbFdyaXRlKFRGVF9NT1NJLCBISUdIKTsKICAgIHBpbk1vZGUoVEZUX1NDTEssIE9VVFBVVCk7CgogICAgcGluTW9kZShURlRf
+          UlNULCBPVVRQVVQpOwogICAgcGluTW9kZShURlRfREMsIE9VVFBVVCk7CiAgICBkaWdpdGFsV3JpdGUoVEZUX0RDLCBISUdIKTsK
+          CiAgICBwaW5Nb2RlKGJydWNlQ29uZmlnUGlucy5OUkYyNF9idXMuY3MsIE9VVFBVVCk7CiAgICBwaW5Nb2RlKGJydWNlQ29uZmln
+          UGlucy5DQzExMDFfYnVzLmNzLCBPVVRQVVQpOwogICAgcGluTW9kZShicnVjZUNvbmZpZ1BpbnMuU0RDQVJEX2J1cy5jcywgT1VU
+          UFVUKTsKI2lmICFkZWZpbmVkKExJVEVfVkVSU0lPTikKICAgIHBpbk1vZGUoYnJ1Y2VDb25maWdQaW5zLlc1NTAwX2J1cy5jcywg
+          T1VUUFVUKTsKICAgIGRpZ2l0YWxXcml0ZShicnVjZUNvbmZpZ1BpbnMuVzU1MDBfYnVzLmNzLCBISUdIKTsKI2VuZGlmCgogICAg
+          ZGlnaXRhbFdyaXRlKGJydWNlQ29uZmlnUGlucy5OUkYyNF9idXMuY3MsIEhJR0gpOwogICAgZGlnaXRhbFdyaXRlKGJydWNlQ29u
+          ZmlnUGlucy5DQzExMDFfYnVzLmNzLCBISUdIKTsKICAgIGRpZ2l0YWxXcml0ZShicnVjZUNvbmZpZ1BpbnMuU0RDQVJEX2J1cy5j
+          cywgSElHSCk7CiAgICBkaWdpdGFsV3JpdGUoVEZUX0NTLCBISUdIKTsKCiNpZmRlZiBJTEk5NDg4X0RSSVZFUgogICAgYnJ1Y2VD
+          b25maWcuY29sb3JJbnZlcnRlZCA9IDA7CiNlbmRpZgp9CgovKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+          KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqCioqIEZ1bmN0aW9uIG5hbWU6IF9wb3N0X3Nl
+          dHVwX2dwaW8oKQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+          KioqKioqKioqKioqKioqKioqKioqKiovCnZvaWQgX3Bvc3Rfc2V0dXBfZ3BpbygpIHsKICAgIGhhbF9icmlnaHRfYXR0YWNoKFRG
+          VF9CTCk7CiAgICBoYWxfYnJpZ2h0X3NldChURlRfQkwsIDEwMCk7CiNpZmRlZiBIQVNfVE9VQ0gKICAgIGhhbF90b3VjaF9pbml0
+          KHRvdWNoQ2ZnKCksIDAsIHRydWUpOyAvLyBzaGFyZXMgdGhlIGRpc3BsYXkgU1BJIGJ1cwojZW5kaWYKfQoKLyoqKioqKioqKioq
+          KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgoqKiBGdW5jdGlvbjogX3Nl
+          dEJyaWdodG5lc3MKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+          KioqKioqKi8Kdm9pZCBfc2V0QnJpZ2h0bmVzcyh1aW50OF90IGJyaWdodHZhbCkgeyBoYWxfYnJpZ2h0X3NldChURlRfQkwsIGJy
+          aWdodHZhbCk7IH0KCi8qKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+          KioqKioqKioKKiogRnVuY3Rpb246IElucHV0SGFuZGxlcgoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+          KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqLwp2b2lkIElucHV0SGFuZGxlcih2b2lkKSB7CiAgICBzdGF0aWMgdW5zaWdu
+          ZWQgbG9uZyB0bSA9IDA7CiAgICBpZiAobWlsbGlzKCkgLSB0bSA8IDIwMCAmJiAhTG9uZ1ByZXNzKSByZXR1cm47CiNpZmRlZiBI
+          QVNfVE9VQ0gKICAgIGNoZWNrUG93ZXJTYXZlVGltZSgpOwogICAgewogICAgICAgIEJydWNlVG91Y2hQb2ludCB0OwogICAgICAg
+          IGlmIChoYWxfdG91Y2hfcmVhZCh0b3VjaENmZygpLCB0KSkgewogICAgICAgICAgICB0bSA9IG1pbGxpcygpOwogICAgICAgICAg
+          ICBpZiAoIWhhbF90b3VjaF9hcHBseSh0KSkgcmV0dXJuOwogICAgICAgIH0KICAgIH0KI2VuZGlmCn0KCi8qKioqKioqKioqKioq
+          KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioKKiogRnVuY3Rpb246IHBvd2Vy
+          T2ZmCioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKiov
+          CnZvaWQgcG93ZXJPZmYoKSB7fQoKLyoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+          KioqKioqKioqKioqKioqKgoqKiBGdW5jdGlvbjogY2hlY2tSZWJvb3QKKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+          KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8Kdm9pZCBjaGVja1JlYm9vdCgpIHt9Cg==
+          CPPEOF
+          echo "---- board .ini ----"; head -5 boards/ESP32-C5-pcb3501s/ESP32-C5-pcb3501s.ini
+          echo "---- interface.cpp ----"; head -3 boards/ESP32-C5-pcb3501s/interface.cpp
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          pip install requests esptool intelhex
+          pip install platformio
+
+      - name: Apply version
+        run: |
+          version="${GITHUB_SHA::7}"
+          sed -i "s/-DBRUCE_VERSION='\"dev\"'/-DBRUCE_VERSION='\"$version\"'/g" ./platformio.ini
+
+      - name: Build
+        run: |
+          set -o pipefail
+          platformio run -e "${{ env.SELECTED_ENV }}" | tee "build-${{ env.SELECTED_ENV }}.log"
+
+      - name: Build summary (on failure too)
+        if: always()
+        run: |
+          echo "==== last 80 log lines ===="
+          tail -n 80 "build-${{ env.SELECTED_ENV }}.log" 2>/dev/null || echo "no log"
+          echo "==== output bins ===="
+          ls -la Bruce-*.* 2>/dev/null || echo "no Bruce bin produced"
+
+      - name: Upload firmware
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bruce-${{ env.SELECTED_ENV }}
+          path: Bruce-*.*
+          retention-days: 7
+          if-no-files-found: error
