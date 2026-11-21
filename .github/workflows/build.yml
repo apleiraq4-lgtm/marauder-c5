@@ -1,0 +1,261 @@
+name: Build Marauder C5 PCB3501S
+
+# Builds ESP32 Marauder for: XH-C5E (ESP32-C5) + 3.5" PCB3501S (ILI9488 + XPT2046)
+# Run it from the Actions tab -> "Build Marauder C5 PCB3501S" -> Run workflow.
+
+on:
+  workflow_dispatch:
+  push:
+
+env:
+  MARAUDER_SHA: d9197cf063cede379104ca8673c2d952d66575a3
+  IDF_VER: "3.3.4"
+  FQBN: "esp32:esp32:esp32c5:FlashSize=8M,PartitionScheme=default_8MB,PSRAM=enabled"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ESP32 Marauder source
+        uses: actions/checkout@v4
+        with:
+          repository: justcallmekoko/ESP32Marauder
+          ref: ${{ env.MARAUDER_SHA }}
+
+      - name: Apply PCB3501S patch
+        run: |
+          cat > pcb3501s.b64 <<'B64END'
+          ZGlmZiAtLWdpdCBhL1VzZXJfU2V0dXBfU2VsZWN0LmggYi9Vc2VyX1NldHVwX1NlbGVjdC5oCmluZGV4IGRlODg4ZDQuLjQ1ZDE2
+          MWEgMTAwNjQ0Ci0tLSBhL1VzZXJfU2V0dXBfU2VsZWN0LmgKKysrIGIvVXNlcl9TZXR1cF9TZWxlY3QuaApAQCAtNDAsNiArNDAs
+          NyBAQAogLy8jaW5jbHVkZSA8VXNlcl9TZXR1cF9jeWRfM181X2luY2guaD4KIC8vI2luY2x1ZGUgPFVzZXJfU2V0dXBfbWFyYXVk
+          ZXJfcGFuY2FrZS5oPgogLy8jaW5jbHVkZSA8VXNlcl9TZXR1cF93c19jNV8zNS5oPgorLy8jaW5jbHVkZSA8VXNlcl9TZXR1cF9w
+          Y2IzNTAxc19jNS5oPgogLy8jaW5jbHVkZSA8VXNlcl9TZXR1cF9tYXJhdWRlcl90X2RvbmdsZV9jNS5oPgogCiAvLyNpbmNsdWRl
+          IDxVc2VyX1NldHVwcy9TZXR1cDFfSUxJOTM0MS5oPiAgLy8gU2V0dXAgZmlsZSBjb25maWd1cmVkIGZvciBteSBJTEk5MzQxCmRp
+          ZmYgLS1naXQgYS9Vc2VyX1NldHVwX3BjYjM1MDFzX2M1LmggYi9Vc2VyX1NldHVwX3BjYjM1MDFzX2M1LmgKbmV3IGZpbGUgbW9k
+          ZSAxMDA2NDQKaW5kZXggMDAwMDAwMC4uMmNmYmRjNQotLS0gL2Rldi9udWxsCisrKyBiL1VzZXJfU2V0dXBfcGNiMzUwMXNfYzUu
+          aApAQCAtMCwwICsxLDMwIEBACisvLyAgICAgICAgICAgICAgICAgICAgICAgICAgICBVU0VSIERFRklORUQgU0VUVElOR1MKKy8v
+          ICAgVEZUX2VTUEkgc2V0dXA6IFhILUM1RSAoRVNQMzItQzUpICsgMy41IiBQQ0IzNTAxUyBWMS4xIChJTEk5NDg4ICsgWFBUMjA0
+          NikKKy8vICAgRG8gTk9UIGNvbm5lY3QgdGhlIHBhbmVsJ3MgU0RPKE1JU08pOiBJTEk5NDg4IGRvZXMgbm90IHJlbGVhc2UgaXQu
+          CisvLyAgIFRvdWNoIFRfRE8gaXMgdGhlIG9ubHkgZGV2aWNlIG9uIE1JU08uCisKKyNkZWZpbmUgSUxJOTQ4OF9EUklWRVIKKy8v
+          I2RlZmluZSBTVDc3OTZfRFJJVkVSICAgLy8gdXNlIHRoaXMgaW5zdGVhZCBpZiBjb2xvdXJzL3BpY3R1cmUgYXJlIHdyb25nCisK
+          KyNkZWZpbmUgVEZUX1dJRFRIICAzMjAKKyNkZWZpbmUgVEZUX0hFSUdIVCA0ODAKKworI2RlZmluZSBURlRfTUlTTyAgNCAgICAv
+          LyBUX0RPIG9ubHkKKyNkZWZpbmUgVEZUX01PU0kgIDUgICAgLy8gU0RBKE1PU0kpICsgVF9ESU4KKyNkZWZpbmUgVEZUX1NDTEsg
+          IDYgICAgLy8gU0NLICsgVF9DTEsKKyNkZWZpbmUgVEZUX0NTICAgIDIzCisjZGVmaW5lIFRGVF9EQyAgICAyNAorI2RlZmluZSBU
+          RlRfUlNUICAgMjYKKyNkZWZpbmUgVEZUX0JMICAgIDggICAgLy8gTEVEIHBpbiBvZiB0aGUgcGFuZWwKKyNkZWZpbmUgVEZUX0JB
+          Q0tMSUdIVF9PTiBISUdICisjZGVmaW5lIFRPVUNIX0NTICAzICAgIC8vIFRfQ1MKKworI2RlZmluZSBMT0FEX0dMQ0QKKyNkZWZp
+          bmUgTE9BRF9GT05UMgorI2RlZmluZSBMT0FEX0ZPTlQ0CisjZGVmaW5lIExPQURfR0ZYRkYKKyNkZWZpbmUgU01PT1RIX0ZPTlQK
+          KworI2RlZmluZSBTUElfRlJFUVVFTkNZICAgICAgIDI3MDAwMDAwCisjZGVmaW5lIFNQSV9SRUFEX0ZSRVFVRU5DWSAgMTYwMDAw
+          MDAKKyNkZWZpbmUgU1BJX1RPVUNIX0ZSRVFVRU5DWSAgMjUwMDAwMApkaWZmIC0tZ2l0IGEvZXNwMzJfbWFyYXVkZXIvRGlzcGxh
+          eS5jcHAgYi9lc3AzMl9tYXJhdWRlci9EaXNwbGF5LmNwcAppbmRleCBlZjRlZWU4Li45NDhmNTRkIDEwMDY0NAotLS0gYS9lc3Az
+          Ml9tYXJhdWRlci9EaXNwbGF5LmNwcAorKysgYi9lc3AzMl9tYXJhdWRlci9EaXNwbGF5LmNwcApAQCAtMjM5LDggKzIzOSw0OCBA
+          QCB2b2lkIERpc3BsYXk6OmluaXQoKSB7CiAgIGJhY2tsaWdodE9uKCk7CiB9CiAKKyNpZmRlZiBNQVJBVURFUl9QQ0IzNTAxU19D
+          NQorICAjaW5jbHVkZSA8UHJlZmVyZW5jZXMuaD4KKyNlbmRpZgorCiB2b2lkIERpc3BsYXk6OnNldENhbERhdGEoYm9vbCBsYW5k
+          c2NhcGUpIHsKLSAgI2lmICFkZWZpbmVkKEhBU19DWURfVE9VQ0gpICYmICFkZWZpbmVkKEhBU19DQVBfVE9VQ0gpCisgICNpZiBk
+          ZWZpbmVkKE1BUkFVREVSX1BDQjM1MDFTX0M1KQorICAgIC8vIENhbGlicmF0aW9uIGlzIHN0b3JlZCBpbiBOVlMuIEZpcnN0IGJv
+          b3QgKG9yIGhvbGRpbmcgQk9PVCB3aGlsZSB0aGUKKyAgICAvLyBzY3JlZW4gc3RhcnRzKSBydW5zIHRoZSBURlRfZVNQSSBjb3Ju
+          ZXIgY2FsaWJyYXRpb24uCisgICAgc3RhdGljIHVpbnQxNl90IGNhbFs1XSA9IHsgMzAwLCAzNjAwLCAzMDAsIDM2MDAsIDQgfTsK
+          KyAgICBzdGF0aWMgYm9vbCBjYWxfbG9hZGVkID0gZmFsc2U7CisgICAgaWYgKCFjYWxfbG9hZGVkKSB7CisgICAgICBQcmVmZXJl
+          bmNlcyB0cDsKKyAgICAgIHRwLmJlZ2luKCJwY2J0b3VjaCIsIGZhbHNlKTsKKyAgICAgIHBpbk1vZGUoMjgsIElOUFVUX1BVTExV
+          UCk7CisgICAgICBkZWxheSg1KTsKKyAgICAgIGNvbnN0IGJvb2wgZm9yY2UgPSBkaWdpdGFsUmVhZCgyOCkgPT0gTE9XOworICAg
+          ICAgaWYgKCFmb3JjZSAmJiB0cC5nZXRCeXRlc0xlbmd0aCgiY2FsIikgPT0gc2l6ZW9mKGNhbCkpIHsKKyAgICAgICAgdHAuZ2V0
+          Qnl0ZXMoImNhbCIsIGNhbCwgc2l6ZW9mKGNhbCkpOworICAgICAgfSBlbHNlIHsKKyAgICAgICAgdGZ0LnNldFJvdGF0aW9uKDAp
+          OworICAgICAgICB0ZnQuZmlsbFNjcmVlbihURlRfQkxBQ0spOworICAgICAgICB0ZnQuc2V0VGV4dENvbG9yKFRGVF9XSElURSwg
+          VEZUX0JMQUNLKTsKKyAgICAgICAgdGZ0LnNldFRleHRTaXplKDIpOworICAgICAgICB0ZnQuc2V0Q3Vyc29yKDIwLCAyMDApOwor
+          ICAgICAgICB0ZnQucHJpbnRsbigiVG91Y2ggdGhlIGNvcm5lcnMiKTsKKyAgICAgICAgdGZ0LnNldEN1cnNvcigyMCwgMjMwKTsK
+          KyAgICAgICAgdGZ0LnByaW50bG4oImFzIGluZGljYXRlZCIpOworICAgICAgICB0ZnQuY2FsaWJyYXRlVG91Y2goY2FsLCBURlRf
+          TUFHRU5UQSwgVEZUX0JMQUNLLCAxNSk7CisgICAgICAgIHRwLnB1dEJ5dGVzKCJjYWwiLCBjYWwsIHNpemVvZihjYWwpKTsKKyAg
+          ICAgICAgdGZ0LmZpbGxTY3JlZW4oVEZUX0JMQUNLKTsKKyAgICAgICAgdGZ0LnNldFJvdGF0aW9uKFNDUkVFTl9PUklFTlRBVElP
+          Tik7CisgICAgICB9CisgICAgICB0cC5lbmQoKTsKKyAgICAgIGNhbF9sb2FkZWQgPSB0cnVlOworICAgIH0KKyAgICBpZiAoIWxh
+          bmRzY2FwZSkgeworICAgICAgdGZ0LnNldFRvdWNoKGNhbCk7CisgICAgfSBlbHNlIHsKKyAgICAgIHVpbnQxNl90IGxjYWxbNV0g
+          PSB7IGNhbFsyXSwgY2FsWzNdLCBjYWxbMF0sIGNhbFsxXSwgKHVpbnQxNl90KShjYWxbNF0gXiAzKSB9OworICAgICAgdGZ0LnNl
+          dFRvdWNoKGxjYWwpOworICAgIH0KKyAgI2VsaWYgIWRlZmluZWQoSEFTX0NZRF9UT1VDSCkgJiYgIWRlZmluZWQoSEFTX0NBUF9U
+          T1VDSCkKICAgICBpZiAoIWxhbmRzY2FwZSkgewogICAgICAgI2lmZGVmIFRGVF9TSElFTEQKICAgICAgICAgdWludDE2X3QgY2Fs
+          RGF0YVs1XSA9IHsgMjc1LCAzNDk0LCAzNjEsIDM1MjgsIDQgfTsgLy8gdGZ0LnNldFJvdGF0aW9uKDApOyAvLyBQb3J0cmFpdCB3
+          aXRoIFRGVCBTaGllbGQKZGlmZiAtLWdpdCBhL2VzcDMyX21hcmF1ZGVyL2NvbmZpZ3MuaCBiL2VzcDMyX21hcmF1ZGVyL2NvbmZp
+          Z3MuaAppbmRleCBmN2JjN2VkLi5hYTVjMWU3IDEwMDY0NAotLS0gYS9lc3AzMl9tYXJhdWRlci9jb25maWdzLmgKKysrIGIvZXNw
+          MzJfbWFyYXVkZXIvY29uZmlncy5oCkBAIC01Myw2ICs1MywxMyBAQAogICAgICNkZWZpbmUgTUFSQVVERVJfUEFOQ0FLRQogICAg
+          ICNkZWZpbmUgTUFSQVVERVJfV1NfQzVfMzVfT1ZFUlJJREUKICAgI2VuZGlmCisgIC8vIEVTUDMyLUM1IERldktpdEMtMSBjbG9u
+          ZSAoWEgtQzVFKSArIDMuNSIgUENCMzUwMVMgU1BJIHBhbmVsCisgIC8vIChJTEk5NDg4IDMyMHg0ODAsIFhQVDIwNDYgcmVzaXN0
+          aXZlIHRvdWNoKS4gUmV1c2VzIFBhbmNha2UncyBDNSBnZW9tZXRyeS4KKyAgLy8jZGVmaW5lIE1BUkFVREVSX1BDQjM1MDFTX0M1
+          CisgICNpZmRlZiBNQVJBVURFUl9QQ0IzNTAxU19DNQorICAgICNkZWZpbmUgTUFSQVVERVJfUEFOQ0FLRQorICAgICNkZWZpbmUg
+          TUFSQVVERVJfUENCMzUwMVNfQzVfT1ZFUlJJREUKKyAgI2VuZGlmCiAgIC8vLy8gRU5EIEJPQVJEIFRBUkdFVFMKIAogICAvLyBU
+          aGUgb2ZmaWNpYWwgQXJkdWlubyBib2FyZCBwYWNrYWdlIHN1cHBsaWVzIHRoaXMgaWRlbnRpZmllciBmb3IgdGhlIFhJQU8KQEAg
+          LTM1ODYsNCArMzU5MywyNyBAQAogICAjZGVmaW5lIEhBU19HUFNfTEM3NkdfSTJDCiAjZW5kaWYKIAorLy8vLyBQQ0IzNTAxUyAr
+          IFhILUM1RSBvdmVycmlkZXMgKGFwcGxpZWQgYWZ0ZXIgUGFuY2FrZSBkZWZhdWx0cyByZXNvbHZlKQorI2lmZGVmIE1BUkFVREVS
+          X1BDQjM1MDFTX0M1X09WRVJSSURFCisgICN1bmRlZiBIQVJEV0FSRV9OQU1FCisgICNkZWZpbmUgSEFSRFdBUkVfTkFNRSAiQzUg
+          UENCMzUwMVMiCisgIC8vIFhQVDIwNDYgcmVzaXN0aXZlIHRvdWNoIGlzIHJlYWQgdGhyb3VnaCBURlRfZVNQSSAoVE9VQ0hfQ1Mp
+          LCBub3QgRlQ2MzM2LgorICAjaWZkZWYgSEFTX0NBUF9UT1VDSAorICAgICN1bmRlZiBIQVNfQ0FQX1RPVUNICisgICNlbmRpZgor
+          ICAvLyBObyBmdWVsIGdhdWdlIC8gYmF0dGVyeSBvbiB0aGlzIGJ1aWxkLgorICAjaWZkZWYgSEFTX01BWDE3MDRYCisgICAgI3Vu
+          ZGVmIEhBU19NQVgxNzA0WAorICAjZW5kaWYKKyAgI2lmZGVmIEhBU19CQVRURVJZCisgICAgI3VuZGVmIEhBU19CQVRURVJZCisg
+          ICNlbmRpZgorICAvLyBQYW5jYWtlIHB1dHMgR1BTIFVBUlQgb24gR1BJTzE0LzEzLCB3aGljaCBhcmUgbmF0aXZlIFVTQiBvbiB0
+          aGlzIGJvYXJkLgorICAjdW5kZWYgR1BTX1RYCisgICN1bmRlZiBHUFNfUlgKKyAgI2RlZmluZSBHUFNfVFggMQorICAjZGVmaW5l
+          IEdQU19SWCAwCisgIC8vIEJPT1QgYnV0dG9uIChHUElPMjgpIGlzIHRoZSBzZWxlY3QgYnV0dG9uOyBSR0IgTEVEIGlzIG9uIEdQ
+          SU8yNyAoUGFuY2FrZSBkZWZhdWx0KS4KKyNlbmRpZgorCiAjZW5kaWYK
+          B64END
+          base64 -d pcb3501s.b64 > pcb3501s.patch
+          git apply pcb3501s.patch
+          git status --short
+
+      - name: Install Arduino CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+
+      - name: Install ESP32 core (via TestFile build)
+        uses: ArminJo/arduino-test-compile@v3.2.1
+        with:
+          sketch-names: TestFile.ino
+          arduino-board-fqbn: esp32:esp32:esp32s2
+          arduino-platform: esp32:esp32@${{ env.IDF_VER }}
+          platform-url: https://github.com/espressif/arduino-esp32/releases/download/${{ env.IDF_VER }}/package_esp32_dev_index.json
+
+      - name: Install ESP32Ping
+        uses: actions/checkout@v4
+        with:
+          repository: marian-craciunescu/ESP32Ping
+          ref: 1.6
+          path: CustomESP32Ping
+
+      - name: Install AsyncTCP
+        uses: actions/checkout@v4
+        with:
+          repository: ESP32Async/AsyncTCP
+          ref: v3.4.8
+          path: CustomAsyncTCP
+
+      - name: Install MicroNMEA
+        uses: actions/checkout@v4
+        with:
+          repository: stevemarple/MicroNMEA
+          ref: v2.0.6
+          path: CustomMicroNMEA
+
+      - name: Install ESPAsyncWebServer
+        uses: actions/checkout@v4
+        with:
+          repository: ESP32Async/ESPAsyncWebServer
+          ref: v3.8.1
+          path: CustomESPAsyncWebServer
+
+      - name: Install TFT_eSPI
+        uses: actions/checkout@v4
+        with:
+          repository: H4W9/TFT_eSPI
+          ref: ESP32-C5
+          path: CustomTFT_eSPI
+
+      - name: Install XPT2046_Touchscreen
+        uses: actions/checkout@v4
+        with:
+          repository: PaulStoffregen/XPT2046_Touchscreen
+          ref: v1.4
+          path: CustomXPT2046_Touchscreen
+
+      - name: Install lv_arduino
+        uses: actions/checkout@v4
+        with:
+          repository: lvgl/lv_arduino
+          ref: 3.0.0
+          path: Customlv_arduino
+
+      - name: Install JPEGDecoder
+        uses: actions/checkout@v4
+        with:
+          repository: Bodmer/JPEGDecoder
+          ref: 1.8.0
+          path: CustomJPEGDecoder
+
+      - name: Install NimBLE-Arduino
+        uses: actions/checkout@v4
+        with:
+          repository: h2zero/NimBLE-Arduino
+          ref: 2.3.8
+          path: CustomNimBLE-Arduino
+
+      - name: Install Adafruit_NeoPixel
+        uses: actions/checkout@v4
+        with:
+          repository: adafruit/Adafruit_NeoPixel
+          ref: 1.12.0
+          path: CustomAdafruit_NeoPixel
+
+      - name: Install ArduinoJson
+        uses: actions/checkout@v4
+        with:
+          repository: bblanchon/ArduinoJson
+          ref: v6.18.2
+          path: CustomArduinoJson
+
+      - name: Install LinkedList
+        uses: actions/checkout@v4
+        with:
+          repository: ivanseidel/LinkedList
+          ref: v1.3.3
+          path: CustomLinkedList
+
+      - name: Install EspSoftwareSerial
+        uses: actions/checkout@v4
+        with:
+          repository: plerup/espsoftwareserial
+          ref: 8.1.0
+          path: CustomEspSoftwareSerial
+
+      - name: Install Adafruit_BusIO
+        uses: actions/checkout@v4
+        with:
+          repository: adafruit/Adafruit_BusIO
+          ref: 1.15.0
+          path: CustomAdafruit_BusIO
+
+      - name: Install Adafruit_MAX1704X
+        uses: actions/checkout@v4
+        with:
+          repository: adafruit/Adafruit_MAX1704X
+          ref: 1.0.2
+          path: CustomAdafruit_MAX1704X
+
+      - name: Install Adafruit_TCA8418
+        run: cp -r libraries/Adafruit_TCA8418 CustomAdafruit_TCA8418
+
+      - name: Configure TFT_eSPI
+        run: |
+          rm -f CustomTFT_eSPI/User_Setup_Select.h
+          cp User*.h CustomTFT_eSPI/
+          sed -i 's|^//#include <User_Setup_pcb3501s_c5.h>|#include <User_Setup_pcb3501s_c5.h>|' CustomTFT_eSPI/User_Setup_Select.h
+          grep -Fqx '#include <User_Setup_pcb3501s_c5.h>' CustomTFT_eSPI/User_Setup_Select.h
+
+      - name: Modify platform.txt
+        run: |
+          for i in $(find $HOME/.arduino15/packages/esp32/hardware/esp32/ -name "platform.txt"); do
+            sed -i 's/compiler.c.elf.extra_flags=/compiler.c.elf.extra_flags=-Wl,-zmuldefs /' "$i"
+          done
+          for f in $(find $HOME/.arduino15/packages/esp32/tools/esp32-arduino-libs/ -name "cpp_flags"); do
+            sed -i 's/-fexceptions/-fno-exceptions/g' "$f"
+          done
+
+      - name: Build Marauder
+        uses: ArminJo/arduino-test-compile@v3.3.0
+        with:
+          sketch-names: esp32_marauder.ino
+          arduino-board-fqbn: ${{ env.FQBN }}
+          extra-arduino-cli-args: "--warnings none --build-property compiler.cpp.extra_flags='-DMARAUDER_PCB3501S_C5'"
+          arduino-platform: esp32:esp32@${{ env.IDF_VER }}
+          platform-url: https://github.com/espressif/arduino-esp32/releases/download/${{ env.IDF_VER }}/package_esp32_dev_index.json
+
+      - name: Collect binaries
+        run: |
+          mkdir -p out
+          BUILD_DIR=./esp32_marauder/build/esp32.esp32.esp32c5
+          ls -la "$BUILD_DIR"
+          cp "$BUILD_DIR"/*.bin out/
+          cd out
+          [ -f esp32_marauder.ino.merged.bin ] && mv esp32_marauder.ino.merged.bin marauder_pcb3501s_FULL_0x0.bin
+          [ -f esp32_marauder.ino.bin ] && mv esp32_marauder.ino.bin marauder_pcb3501s_APP_0x10000.bin
+          ls -la
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: marauder_c5_pcb3501s
+          path: out/*.bin
+          retention-days: 30
