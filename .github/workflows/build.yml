@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        driver: [ILI9488, ST7796]
+        driver: [ILI9488]
     steps:
       - name: Checkout ESP32 Marauder source
         uses: actions/checkout@v4
@@ -233,6 +233,31 @@ jobs:
             sed -i 's|^#define ILI9488_DRIVER|//#define ILI9488_DRIVER|; s|^//#define ST7796_DRIVER.*|#define ST7796_DRIVER|' CustomTFT_eSPI/User_Setup_pcb3501s_c5.h
           fi
           grep -n "_DRIVER" CustomTFT_eSPI/User_Setup_pcb3501s_c5.h
+
+      - name: Patch TFT_eSPI C5 ILI9488 pushBlock (use Arduino SPI driver)
+        run: |
+          python3 - <<'PYEOF'
+          p = 'CustomTFT_eSPI/Processors/TFT_eSPI_ESP32_C5.c'
+          s = open(p).read()
+          anchor = "  uint32_t r2 = r1>>8 | b<<8;\n"
+          assert s.count(anchor) == 1, "anchor not found"
+          add = anchor + """
+            // PCB3501S fix: the raw-register burst path dropped data on ESP32-C5
+            // (bottom third of the ILI9488 never filled, smeared text). Send the
+            // 18-bit colour through the Arduino SPI driver, like single pixels do.
+            {
+              uint8_t pat[3] = { (uint8_t)((color & 0xF800) >> 8),
+                                 (uint8_t)((color & 0x07E0) >> 3),
+                                 (uint8_t)((color & 0x001F) << 3) };
+              if (len) spi.writePattern(pat, 3, len);
+              (void)r0; (void)r1; (void)r2;
+              return;
+            }
+          """
+          s = s.replace(anchor, add)
+          open(p, 'w').write(s)
+          print("pushBlock patched")
+          PYEOF
 
       - name: Modify platform.txt
         run: |
